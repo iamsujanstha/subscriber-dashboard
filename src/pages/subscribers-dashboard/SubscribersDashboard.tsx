@@ -9,6 +9,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { getCombinedSubscribers } from '@/services/subscribers.service';
 import Select from '@/components/ui/select/Select';
 import { removeUrlParam, resetUrlParams, updateUrlParam } from '@/utils/url';
+import { barChartIcon, dollarIcon, listIcon, pieChartIcon, SubscriptionIcon, userPlusIcon, userSlashIcon } from '@/assets';
 
 
 const SubscribersDashboard: React.FC = () => {
@@ -101,34 +102,53 @@ const SubscribersDashboard: React.FC = () => {
           value={totalSubscribers}
           trend="up"
           trendValue="12%"
+          icon={SubscriptionIcon}
         />
         <StatsCard
           title="Active Subscribers"
           value={activeSubscribers}
           trend="up"
           trendValue="5%"
+          icon={userPlusIcon}
+        />
+        <StatsCard
+          title="Expired Subscriptions"
+          value={activeSubscribers}
+          trend="up"
+          trendValue="5%"
+          icon={userSlashIcon}
         />
         <StatsCard
           title="Total Revenue"
           value={`$${totalRevenue.toFixed(2)}`}
           trend="up"
           trendValue="8%"
+          icon={dollarIcon}
         />
       </div>
 
       <div className={styles.chartsRow}>
         <div className={styles.chartContainer}>
-          <h2>Subscription Plans</h2>
+          <div className={styles.inlineHeader}>
+            <img src={pieChartIcon} width={30} height={30} alt="List Icon" />
+            <h2>Subscription Plans</h2>
+          </div>
           <PlanDistributionChart subscribers={subscribers} />
         </div>
         <div className={styles.chartContainer}>
-          <h2>Subscribers Chart</h2>
+          <div className={styles.inlineHeader}>
+            <img src={barChartIcon} width={30} height={30} alt="List Icon" />
+            <h2>Subscription Chart</h2>
+          </div>
           <div className={styles.placeholderChart}>**Chart as per requirement**</div>
         </div>
       </div>
 
       <div className={styles.subscribersSection}>
-        <h2>Subscribers List</h2>
+        <div className={styles.inlineHeader}>
+          <img src={listIcon} width={30} height={30} alt="List Icon" />
+          <h2>Subscribers List</h2>
+        </div>
 
         <div className={styles.filters}>
           <input

@@ -10,25 +10,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [, setIsMobileView] = useState(false);
 
-  // Watch for screen resize
   useEffect(() => {
     const handleResize = () => {
       const isMobile = window.innerWidth <= 768;
       setIsMobileView(isMobile);
 
-      // Auto-collapse on small screens
       if (isMobile) {
         setIsSidebarCollapsed(true);
       }
     };
 
-    handleResize(); // run on mount
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const toggleSidebar = () => {
-    // On mobile, just toggle; on desktop, allow expand/collapse
     setIsSidebarCollapsed(prev => !prev);
   };
 
