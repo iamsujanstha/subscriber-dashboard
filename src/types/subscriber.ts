@@ -26,7 +26,6 @@ export interface Subscriber {
   expiresOn: Date;
   joinDate: Date;
   country: string;
-  revenue: number;
 }
 
 export type SortField = 'name' | 'email' | 'plan' | 'status' | 'expiresOn' | 'joinDate' | 'revenue';

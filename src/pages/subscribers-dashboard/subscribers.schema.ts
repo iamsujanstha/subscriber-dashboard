@@ -21,6 +21,5 @@ export const SubscriberListCols = [
   { label: 'STATUS', field: 'status' },
   { label: 'EXPIRES ON', field: 'expiresOn' },
   { label: 'JOIN DATE', field: 'joinDate' },
-  { label: 'COUNTRY', field: 'country' },
-  { label: 'REVENUE', field: 'revenue' }
+  { label: 'COUNTRY', field: 'country' }
 ]

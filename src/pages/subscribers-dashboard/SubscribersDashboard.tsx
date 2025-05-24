@@ -8,8 +8,8 @@ import type { SortDirection, SortField, Subscriber, SubscriptionPlan } from '@/t
 import { useDebounce } from '@/hooks/useDebounce';
 import { getCombinedSubscribers } from '@/services/subscribers.service';
 import Select from '@/components/ui/select/Select';
-import { removeUrlParam, resetUrlParams, updateUrlParam } from '@/utils/url';
-import { barChartIcon, dollarIcon, listIcon, pieChartIcon, SubscriptionIcon, userPlusIcon, userSlashIcon } from '@/assets';
+import { resetUrlParams } from '@/utils/url';
+import { barChartIcon, listIcon, pieChartIcon, SubscriptionIcon, userPlusIcon, userSlashIcon } from '@/assets';
 
 
 const SubscribersDashboard: React.FC = () => {
@@ -39,13 +39,6 @@ const SubscribersDashboard: React.FC = () => {
     loadData();
   }, []);
 
-  useEffect(function updateUrlOnPageNoChange() {
-    if (pageNumber > 1) {
-      updateUrlParam('page', String(pageNumber));
-    } else {
-      removeUrlParam('page');
-    }
-  }, [pageNumber]);
 
   useEffect(function syncPageNoWithUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -85,9 +78,6 @@ const SubscribersDashboard: React.FC = () => {
         case 'joinDate':
           comparison = a.joinDate.getTime() - b.joinDate.getTime();
           break;
-        case 'revenue':
-          comparison = a.revenue - b.revenue;
-          break;
         default:
           comparison = 0;
       }
@@ -107,11 +97,10 @@ const SubscribersDashboard: React.FC = () => {
   }, [sortField]);
 
 
-  const { totalSubscribers, activeSubscribers, totalRevenue } = useMemo(() => {
+  const { totalSubscribers, activeSubscribers } = useMemo(() => {
     return {
       totalSubscribers: subscribers.length,
       activeSubscribers: subscribers.filter(s => s.status === 'Active').length,
-      totalRevenue: subscribers.reduce((sum, sub) => sum + sub.revenue, 0)
     };
   }, [subscribers]);
 
@@ -162,13 +151,6 @@ const SubscribersDashboard: React.FC = () => {
           trend="up"
           trendValue="5%"
           icon={userSlashIcon}
-        />
-        <StatsCard
-          title="Total Revenue"
-          value={`$${totalRevenue.toFixed(2)}`}
-          trend="up"
-          trendValue="8%"
-          icon={dollarIcon}
         />
       </div>
 

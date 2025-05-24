@@ -87,7 +87,6 @@ const SubscriberList: React.FC<SubscriberListProps> = ({
                 <td>{formatDate(subscriber.expiresOn)}</td>
                 <td>{formatDate(subscriber.joinDate)}</td>
                 <td>{subscriber.country}</td>
-                <td>${subscriber.revenue.toFixed(2)}</td>
               </tr>
             ))
           ) : (
