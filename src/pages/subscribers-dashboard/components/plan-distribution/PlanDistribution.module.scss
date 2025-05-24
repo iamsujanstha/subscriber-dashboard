@@ -1,0 +1,44 @@
+.planDistribution {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.planRow {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.planLabel {
+  width: 100px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.planName {
+  font-weight: 500;
+}
+
+.planCount {
+  color: #7f8c8d;
+}
+
+.progressBarContainer {
+  flex: 1;
+  height: 10px;
+  background-color: #ecf0f1;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 5px;
+}
+
+.percentage {
+  width: 40px;
+  text-align: right;
+  font-weight: 500;
+}
