@@ -39,7 +39,7 @@ const SubscribersDashboard: React.FC = () => {
     loadData();
   }, []);
 
-
+  // For Persist pagination even when page refresh
   useEffect(function syncPageNoWithUrl() {
     const params = new URLSearchParams(window.location.search);
     const page = params.get('page');
@@ -47,6 +47,14 @@ const SubscribersDashboard: React.FC = () => {
   }, []);
 
   const filteredAndSortedSubscribers = useMemo(() => {
+    //Early return if no filters applied
+    if (
+      debouncedSearchTerm === '' &&
+      selectedPlan === 'All' &&
+      selectedStatus === 'All'
+    ) {
+      return subscribers;
+    }
     const filtered = subscribers.filter(subscriber => {
       const matchesSearch = subscriber.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         subscriber.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
