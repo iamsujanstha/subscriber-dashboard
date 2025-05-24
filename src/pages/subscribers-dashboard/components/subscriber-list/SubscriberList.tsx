@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import styles from './SubscriberList.module.scss';
-import type { Subscriber } from '@/types/subscriber';
+import type { SortDirection, SortField, Subscriber } from '@/types/subscriber';
 import {
   getCurrentPageFromUrl,
   updatePageInUrl,
@@ -8,44 +8,68 @@ import {
   validatePageNumber,
 } from '@/utils/pagination';
 import { formatDate } from '@/utils/date-utils';
-
+import { SubscriberListCols } from '@/pages/subscribers-dashboard/subscribers.schema';
 
 interface SubscriberListProps {
   subscribers: Subscriber[];
   currentPageNumber: number;
-  handlePageNumber: React.Dispatch<React.SetStateAction<number>>
+  handlePageNumber: (num: number) => void;
+  sortField?: SortField;
+  sortDirection?: SortDirection;
+  onSort?: (field: SortField) => void;
 }
 
-const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers, currentPageNumber, handlePageNumber }) => {
-  const [itemsPerPage] = useState(10);
+const ITEMS_PER_PAGE = 10;
 
-  useEffect(function initializePage() {
+const SortIndicator: React.FC<{ field: SortField; currentField?: SortField; direction?: SortDirection }> = ({ field, currentField, direction }) => {
+  if (field !== currentField) return null;
+  return <span>{direction === 'asc' ? '↑' : '↓'}</span>;
+};
+
+const SubscriberList: React.FC<SubscriberListProps> = ({
+  subscribers,
+  currentPageNumber,
+  handlePageNumber,
+  sortField,
+  sortDirection,
+  onSort,
+}) => {
+  useEffect(() => {
     handlePageNumber(getCurrentPageFromUrl());
   }, [handlePageNumber]);
 
-  const paginate = useCallback(function handlePageChange(pageNumber: number) {
-    const validatedPage = validatePageNumber(pageNumber, itemsPerPage, subscribers.length);
-    handlePageNumber(validatedPage);
-    updatePageInUrl(validatedPage);
-  }, [handlePageNumber, itemsPerPage, subscribers.length]);
+  const totalPages = useMemo(() => Math.ceil(subscribers.length / ITEMS_PER_PAGE), [subscribers.length]);
 
-  // calculate pagination
-  const indexOfLastItem = currentPageNumber * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = subscribers.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(subscribers.length / itemsPerPage);
+  const currentItems = useMemo(() => {
+    const start = (currentPageNumber - 1) * ITEMS_PER_PAGE;
+    return subscribers.slice(start, start + ITEMS_PER_PAGE);
+  }, [subscribers, currentPageNumber]);
 
-  const pageNumbers = getPaginationRange(currentPageNumber, totalPages);
+  const pageNumbers = useMemo(() => getPaginationRange(currentPageNumber, totalPages), [currentPageNumber, totalPages]);
+
+  const paginate = useCallback(
+    (page: number) => {
+      const validated = validatePageNumber(page, ITEMS_PER_PAGE, subscribers.length);
+      handlePageNumber(validated);
+      updatePageInUrl(validated);
+    },
+    [handlePageNumber, subscribers.length]
+  );
+
+  const handleHeaderClick = (field: SortField) => {
+    onSort?.(field);
+  };
 
   return (
     <div className={styles.tableContainer}>
       <table className={styles.subscriberTable}>
         <thead>
           <tr>
-            {['user', 'email', 'plan', 'status', 'expires on', 'join date', 'country', 'revenue'].map(
-              (item) => (
-                <th>{item.toUpperCase()}</th>
-              ))}
+            {SubscriberListCols.map(({ label, field }) => (
+              <th key={field} onClick={() => handleHeaderClick(field as SortField)}>
+                {label} <SortIndicator field={field as SortField} currentField={sortField} direction={sortDirection} />
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -68,13 +92,15 @@ const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers, currentPag
             ))
           ) : (
             <tr>
-              <td colSpan={8} className={styles.noResults}>No subscribers found</td>
+              <td colSpan={8} className={styles.noResults}>
+                No subscribers found
+              </td>
             </tr>
           )}
         </tbody>
       </table>
 
-      {subscribers.length > itemsPerPage && (
+      {totalPages > 1 && (
         <div className={styles.pagination}>
           <button
             onClick={() => paginate(currentPageNumber - 1)}
@@ -84,8 +110,8 @@ const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers, currentPag
             Previous
           </button>
 
-          {pageNumbers.map((number, index) => (
-            <React.Fragment key={index}>
+          {pageNumbers.map((number, idx) => (
+            <React.Fragment key={idx}>
               {number === '...' ? (
                 <span className={styles.paginationEllipsis}>...</span>
               ) : (
@@ -98,6 +124,7 @@ const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers, currentPag
               )}
             </React.Fragment>
           ))}
+
           <button
             onClick={() => paginate(currentPageNumber + 1)}
             disabled={currentPageNumber === totalPages}

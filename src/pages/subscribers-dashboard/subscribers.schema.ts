@@ -13,3 +13,14 @@ export const statusOptions = [
   { value: 'Active', label: 'Active' },
   { value: 'Expired', label: 'Expired' },
 ];
+
+export const SubscriberListCols = [
+  { label: 'USER', field: 'name' },
+  { label: 'EMAIL', field: 'email' },
+  { label: 'PLAN', field: 'plan' },
+  { label: 'STATUS', field: 'status' },
+  { label: 'EXPIRES ON', field: 'expiresOn' },
+  { label: 'JOIN DATE', field: 'joinDate' },
+  { label: 'COUNTRY', field: 'country' },
+  { label: 'REVENUE', field: 'revenue' }
+]

@@ -28,3 +28,6 @@ export interface Subscriber {
   country: string;
   revenue: number;
 }
+
+export type SortField = 'name' | 'email' | 'plan' | 'status' | 'expiresOn' | 'joinDate' | 'revenue';
+export type SortDirection = 'asc' | 'desc';

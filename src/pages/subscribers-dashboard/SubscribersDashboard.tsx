@@ -4,7 +4,7 @@ import PlanDistributionChart from './components/plan-distribution/PlanDistributi
 import StatsCard from '@/pages/subscribers-dashboard/components/stats-card/StatsCard';
 import SubscriberList from '@/pages/subscribers-dashboard/components/subscriber-list/SubscriberList';
 import { planOptions, statusOptions } from '@/pages/subscribers-dashboard/subscribers.schema';
-import type { Subscriber, SubscriptionPlan } from '@/types/subscriber';
+import type { SortDirection, SortField, Subscriber, SubscriptionPlan } from '@/types/subscriber';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getCombinedSubscribers } from '@/services/subscribers.service';
 import Select from '@/components/ui/select/Select';
@@ -19,6 +19,8 @@ const SubscribersDashboard: React.FC = () => {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pageNumber, setPageNumber] = useState(1);
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
@@ -51,8 +53,8 @@ const SubscribersDashboard: React.FC = () => {
     if (page) setPageNumber(Number(page));
   }, []);
 
-  const filteredSubscribers = useMemo(() => {
-    return subscribers.filter(subscriber => {
+  const filteredAndSortedSubscribers = useMemo(() => {
+    const filtered = subscribers.filter(subscriber => {
       const matchesSearch = subscriber.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         subscriber.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
       const matchesPlan = selectedPlan === 'All' || subscriber.plan === selectedPlan;
@@ -60,7 +62,50 @@ const SubscribersDashboard: React.FC = () => {
 
       return matchesSearch && matchesPlan && matchesStatus;
     });
-  }, [subscribers, debouncedSearchTerm, selectedPlan, selectedStatus]);
+
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortField) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'email':
+          comparison = a.email.localeCompare(b.email);
+          break;
+        case 'plan':
+          comparison = a.plan.localeCompare(b.plan);
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+        case 'expiresOn':
+          comparison = a.expiresOn.getTime() - b.expiresOn.getTime();
+          break;
+        case 'joinDate':
+          comparison = a.joinDate.getTime() - b.joinDate.getTime();
+          break;
+        case 'revenue':
+          comparison = a.revenue - b.revenue;
+          break;
+        default:
+          comparison = 0;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [subscribers, debouncedSearchTerm, selectedPlan, selectedStatus, sortField, sortDirection]);
+
+  const handleSort = useCallback((field: SortField) => {
+    if (field === sortField) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setPageNumber(1);
+  }, [sortField]);
+
 
   const { totalSubscribers, activeSubscribers, totalRevenue } = useMemo(() => {
     return {
@@ -171,7 +216,14 @@ const SubscribersDashboard: React.FC = () => {
             className={styles.filterSelect}
           />
         </div>
-        <SubscriberList subscribers={filteredSubscribers} currentPageNumber={pageNumber} handlePageNumber={setPageNumber} />
+        <SubscriberList
+          subscribers={filteredAndSortedSubscribers}
+          currentPageNumber={pageNumber}
+          handlePageNumber={setPageNumber}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+        />
       </div>
     </div>
   );
