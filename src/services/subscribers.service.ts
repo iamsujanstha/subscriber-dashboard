@@ -1,6 +1,6 @@
-import type { Subscription, User, Subscriber, SubscriptionPlan } from '../types/subscriber';
-import subscriptionsData from '../mocks/subscriptions.json';
-import usersData from '../mocks/users.json';
+import type { Subscription, User, Subscriber, SubscriptionPlan } from '@/types/subscriber';
+import subscriptionsData from '@/mocks/subscriptions.json';
+import usersData from '@/mocks/users.json';
 
 export const getCombinedSubscribers = (): Subscriber[] => {
   const subscriptions: Subscription[] = subscriptionsData.map(sub => ({
@@ -12,8 +12,7 @@ export const getCombinedSubscribers = (): Subscriber[] => {
   return subscriptions.map(sub => {
     const user = users.find(u => u.id === parseInt(sub.user_id));
     const expiresOn = new Date(sub.expires_on);
-    const now = new Date();
-    const status = expiresOn > now ? 'Active' : 'Expired';
+    const status = user?.active ? 'Active' : 'Expired';
 
     const revenue = calculateRevenue(sub.package);
 
@@ -31,6 +30,7 @@ export const getCombinedSubscribers = (): Subscriber[] => {
   });
 };
 
+//here I set assumption plan price.
 const calculateRevenue = (plan: SubscriptionPlan): number => {
   const planPrices: Record<SubscriptionPlan, number> = {
     'Plan 1': 9.99,

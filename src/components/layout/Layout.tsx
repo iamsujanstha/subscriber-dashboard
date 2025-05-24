@@ -1,11 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './Layout.module.scss';
-import {
-  FaUsers,
-  FaCog,
-  FaChevronLeft,
-  FaChevronRight
-} from 'react-icons/fa';
+import Sidebar from '@/components/core/sidebar/Sidebar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,43 +8,45 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [, setIsMobileView] = useState(false);
+
+  // Watch for screen resize
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth <= 768;
+      setIsMobileView(isMobile);
+
+      // Auto-collapse on small screens
+      if (isMobile) {
+        setIsSidebarCollapsed(true);
+      }
+    };
+
+    handleResize(); // run on mount
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
+    // On mobile, just toggle; on desktop, allow expand/collapse
+    setIsSidebarCollapsed(prev => !prev);
   };
-
-  const menuItems = [
-    { icon: <FaUsers />, label: 'Subscribers Dashboard' },
-    { icon: <FaCog />, label: 'Settings' },
-  ];
 
   return (
     <div className={styles.layout}>
-      <aside className={`${styles.sidebar} ${isSidebarCollapsed ? styles.collapsed : ''}`}>
-        <div className={styles.sidebarHeader}>
-          {!isSidebarCollapsed && <h2>Genius System Pvt. Ltd.</h2>}
-          <button onClick={toggleSidebar} className={styles.toggleButton}>
-            {isSidebarCollapsed ? <FaChevronRight /> : <FaChevronLeft />}
-          </button>
-        </div>
+      <Sidebar
+        isCollapsed={isSidebarCollapsed}
+        onToggle={toggleSidebar}
+        activeItem={0}
+      />
 
-        <nav className={styles.nav}>
-          <ul>
-            {menuItems.map((item, index) => (
-              <li
-                key={index}
-                className={index === 0 ? styles.active : ''}
-                title={isSidebarCollapsed ? item.label : ''}
-              >
-                <span className={styles.icon}>{item.icon}</span>
-                {!isSidebarCollapsed && <span className={styles.label}>{item.label}</span>}
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </aside>
-
-      <main className={styles.mainContent} style={{ marginLeft: isSidebarCollapsed ? '70px' : '300px' }}>
+      <main
+        className={styles.mainContent}
+        style={{
+          marginLeft: isSidebarCollapsed ? '70px' : '300px',
+          transition: 'margin-left 0.3s ease',
+        }}
+      >
         {children}
       </main>
     </div>

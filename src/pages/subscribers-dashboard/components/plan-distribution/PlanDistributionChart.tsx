@@ -42,7 +42,6 @@ const PlanDistributionChart: React.FC<PlanDistributionChartProps> = ({ subscribe
   );
 };
 
-// Helper function to get color for each plan
 const getPlanColor = (plan: SubscriptionPlan): string => {
   switch (plan) {
     case 'Plan 1': return '#3498db';

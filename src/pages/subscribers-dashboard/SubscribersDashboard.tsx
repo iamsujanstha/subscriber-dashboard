@@ -6,8 +6,9 @@ import SubscriberList from '@/pages/subscribers-dashboard/components/subscriber-
 import { planOptions, statusOptions } from '@/pages/subscribers-dashboard/subscribers.schema';
 import type { Subscriber, SubscriptionPlan } from '@/types/subscriber';
 import { useDebounce } from '@/hooks/useDebounce';
-import { getCombinedSubscribers } from '@/services/dataService';
+import { getCombinedSubscribers } from '@/services/subscribers.service';
 import Select from '@/components/ui/select/Select';
+import { removeUrlParam, resetUrlParams, updateUrlParam } from '@/utils/url';
 
 
 const SubscribersDashboard: React.FC = () => {
@@ -16,6 +17,7 @@ const SubscribersDashboard: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<'All' | 'Active' | 'Expired'>('All');
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pageNumber, setPageNumber] = useState(1);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
@@ -32,6 +34,20 @@ const SubscribersDashboard: React.FC = () => {
     };
 
     loadData();
+  }, []);
+
+  useEffect(function updateUrlOnPageNoChange() {
+    if (pageNumber > 1) {
+      updateUrlParam('page', String(pageNumber));
+    } else {
+      removeUrlParam('page');
+    }
+  }, [pageNumber]);
+
+  useEffect(function syncPageNoWithUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get('page');
+    if (page) setPageNumber(Number(page));
   }, []);
 
   const filteredSubscribers = useMemo(() => {
@@ -55,15 +71,20 @@ const SubscribersDashboard: React.FC = () => {
 
   const handlePlanChange = useCallback((value: string) => {
     setSelectedPlan(value as SubscriptionPlan | 'All');
+    setPageNumber(1);
+    resetUrlParams();
   }, []);
 
   const handleStatusChange = useCallback((value: string) => {
     setSelectedStatus(value as 'All' | 'Active' | 'Expired');
-
+    setPageNumber(1);
+    resetUrlParams();
   }, []);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    setPageNumber(1);
+    resetUrlParams();
   }, []);
 
   if (isLoading) {
@@ -97,12 +118,12 @@ const SubscribersDashboard: React.FC = () => {
 
       <div className={styles.chartsRow}>
         <div className={styles.chartContainer}>
-          <h2>Plan Distribution</h2>
+          <h2>Subscription Plans</h2>
           <PlanDistributionChart subscribers={subscribers} />
         </div>
         <div className={styles.chartContainer}>
-          <h2>Subscribers Over Time</h2>
-          <div className={styles.placeholderChart}>Chart placeholder</div>
+          <h2>Subscribers Chart</h2>
+          <div className={styles.placeholderChart}>**Chart as per requirement**</div>
         </div>
       </div>
 
@@ -130,7 +151,7 @@ const SubscribersDashboard: React.FC = () => {
             className={styles.filterSelect}
           />
         </div>
-        <SubscriberList subscribers={filteredSubscribers} />
+        <SubscriberList subscribers={filteredSubscribers} currentPageNumber={pageNumber} handlePageNumber={setPageNumber} />
       </div>
     </div>
   );

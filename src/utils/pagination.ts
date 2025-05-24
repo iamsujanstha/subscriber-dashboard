@@ -1,8 +1,3 @@
-/**
- * Gets the current page from URL search parameters
- * @param defaultPage Default page number if not specified in URL
- * @returns Current page number
- */
 export const getCurrentPageFromUrl = (defaultPage = 1): number => {
   const searchParams = new URLSearchParams(window.location.search);
   const pageParam = searchParams.get('page');
@@ -10,10 +5,6 @@ export const getCurrentPageFromUrl = (defaultPage = 1): number => {
   return isNaN(page) || page < 1 ? defaultPage : page;
 };
 
-/**
- * Updates the URL with the current page number
- * @param page Current page number
- */
 export const updatePageInUrl = (page: number): void => {
   const url = new URL(window.location.href);
   if (page > 1) {
@@ -24,13 +15,6 @@ export const updatePageInUrl = (page: number): void => {
   window.history.replaceState({}, '', url.toString());
 };
 
-/**
- * Calculates pagination range
- * @param currentPage Current active page
- * @param totalPages Total number of pages
- * @param maxVisiblePages Maximum number of visible page buttons
- * @returns Array of page numbers with possible ellipsis strings
- */
 export const getPaginationRange = (
   currentPage: number,
   totalPages: number,

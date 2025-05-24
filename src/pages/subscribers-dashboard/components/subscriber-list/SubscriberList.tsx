@@ -12,29 +12,30 @@ import { formatDate } from '@/utils/date-utils';
 
 interface SubscriberListProps {
   subscribers: Subscriber[];
+  currentPageNumber: number;
+  handlePageNumber: React.Dispatch<React.SetStateAction<number>>
 }
 
-const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers }) => {
+const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers, currentPageNumber, handlePageNumber }) => {
   const [itemsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(function initializePage() {
-    setCurrentPage(getCurrentPageFromUrl());
-  }, []);
+    handlePageNumber(getCurrentPageFromUrl());
+  }, [handlePageNumber]);
 
   const paginate = useCallback(function handlePageChange(pageNumber: number) {
     const validatedPage = validatePageNumber(pageNumber, itemsPerPage, subscribers.length);
-    setCurrentPage(validatedPage);
+    handlePageNumber(validatedPage);
     updatePageInUrl(validatedPage);
-  }, [itemsPerPage, subscribers.length]);
+  }, [handlePageNumber, itemsPerPage, subscribers.length]);
 
   // calculate pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfLastItem = currentPageNumber * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = subscribers.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(subscribers.length / itemsPerPage);
 
-  const pageNumbers = getPaginationRange(currentPage, totalPages);
+  const pageNumbers = getPaginationRange(currentPageNumber, totalPages);
 
   return (
     <div className={styles.tableContainer}>
@@ -76,8 +77,8 @@ const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers }) => {
       {subscribers.length > itemsPerPage && (
         <div className={styles.pagination}>
           <button
-            onClick={() => paginate(currentPage - 1)}
-            disabled={currentPage === 1}
+            onClick={() => paginate(currentPageNumber - 1)}
+            disabled={currentPageNumber === 1}
             className={styles.paginationButton}
           >
             Previous
@@ -90,7 +91,7 @@ const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers }) => {
               ) : (
                 <button
                   onClick={() => paginate(number as number)}
-                  className={`${styles.paginationButton} ${currentPage === number ? styles.active : ''}`}
+                  className={`${styles.paginationButton} ${currentPageNumber === number ? styles.active : ''}`}
                 >
                   {number}
                 </button>
@@ -98,8 +99,8 @@ const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers }) => {
             </React.Fragment>
           ))}
           <button
-            onClick={() => paginate(currentPage + 1)}
-            disabled={currentPage === totalPages}
+            onClick={() => paginate(currentPageNumber + 1)}
+            disabled={currentPageNumber === totalPages}
             className={styles.paginationButton}
           >
             Next
