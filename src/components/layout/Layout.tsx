@@ -27,7 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className={styles.layout}>
       <aside className={`${styles.sidebar} ${isSidebarCollapsed ? styles.collapsed : ''}`}>
         <div className={styles.sidebarHeader}>
-          {!isSidebarCollapsed && <h2>Menu</h2>}
+          {!isSidebarCollapsed && <h2>Genius System Pvt. Ltd.</h2>}
           <button onClick={toggleSidebar} className={styles.toggleButton}>
             {isSidebarCollapsed ? <FaChevronRight /> : <FaChevronLeft />}
           </button>

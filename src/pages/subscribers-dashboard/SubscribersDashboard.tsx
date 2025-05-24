@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import styles from './SubscribersDashboard.module.scss';
 import PlanDistributionChart from './components/plan-distribution/PlanDistributionChart';
-import Select from '../../components/ui/select/Select';
-import type { Subscriber, SubscriptionPlan } from '../../types/subscriber';
-import { getCombinedSubscribers } from '../../services/dataService';
-import { useDebounce } from '../../hooks/useDebounce';
 import StatsCard from '@/pages/subscribers-dashboard/components/stats-card/StatsCard';
 import SubscriberList from '@/pages/subscribers-dashboard/components/subscriber-list/SubscriberList';
+import { planOptions, statusOptions } from '@/pages/subscribers-dashboard/subscribers.schema';
+import type { Subscriber, SubscriptionPlan } from '@/types/subscriber';
+import { useDebounce } from '@/hooks/useDebounce';
+import { getCombinedSubscribers } from '@/services/dataService';
+import Select from '@/components/ui/select/Select';
+
 
 const SubscribersDashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,13 +17,12 @@ const SubscribersDashboard: React.FC = () => {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Use the debounce hook for search term
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  useEffect(() => {
+  useEffect(function fetchData() {
     const loadData = async () => {
       try {
-        const data = getCombinedSubscribers();
+        const data = await getCombinedSubscribers();
         setSubscribers(data);
       } catch (error) {
         console.error('Error loading data:', error);
@@ -33,34 +34,37 @@ const SubscribersDashboard: React.FC = () => {
     loadData();
   }, []);
 
-  const planOptions = [
-    { value: 'All', label: 'All Plans' },
-    { value: 'Plan 1', label: 'Plan 1' },
-    { value: 'Plan 2', label: 'Plan 2' },
-    { value: 'Plan3', label: 'Plan3' },
-    { value: 'Plan 6', label: 'Plan 6' },
-    { value: 'Plan 12', label: 'Plan 12' },
-    { value: 'Plan Unlimited', label: 'Plan Unlimited' },
-  ];
+  const filteredSubscribers = useMemo(() => {
+    return subscribers.filter(subscriber => {
+      const matchesSearch = subscriber.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        subscriber.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+      const matchesPlan = selectedPlan === 'All' || subscriber.plan === selectedPlan;
+      const matchesStatus = selectedStatus === 'All' || subscriber.status === selectedStatus;
 
-  const statusOptions = [
-    { value: 'All', label: 'All Status' },
-    { value: 'Active', label: 'Active' },
-    { value: 'Expired', label: 'Expired' },
-  ];
+      return matchesSearch && matchesPlan && matchesStatus;
+    });
+  }, [subscribers, debouncedSearchTerm, selectedPlan, selectedStatus]);
 
-  const filteredSubscribers = subscribers.filter(subscriber => {
-    const matchesSearch = subscriber.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-      subscriber.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
-    const matchesPlan = selectedPlan === 'All' || subscriber.plan === selectedPlan;
-    const matchesStatus = selectedStatus === 'All' || subscriber.status === selectedStatus;
+  const { totalSubscribers, activeSubscribers, totalRevenue } = useMemo(() => {
+    return {
+      totalSubscribers: subscribers.length,
+      activeSubscribers: subscribers.filter(s => s.status === 'Active').length,
+      totalRevenue: subscribers.reduce((sum, sub) => sum + sub.revenue, 0)
+    };
+  }, [subscribers]);
 
-    return matchesSearch && matchesPlan && matchesStatus;
-  });
+  const handlePlanChange = useCallback((value: string) => {
+    setSelectedPlan(value as SubscriptionPlan | 'All');
+  }, []);
 
-  const totalSubscribers = subscribers.length;
-  const activeSubscribers = subscribers.filter(s => s.status === 'Active').length;
-  const totalRevenue = subscribers.reduce((sum, sub) => sum + sub.revenue, 0);
+  const handleStatusChange = useCallback((value: string) => {
+    setSelectedStatus(value as 'All' | 'Active' | 'Expired');
+
+  }, []);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, []);
 
   if (isLoading) {
     return <div className={styles.loading}>Loading dashboard...</div>;
@@ -77,14 +81,12 @@ const SubscribersDashboard: React.FC = () => {
           trend="up"
           trendValue="12%"
         />
-
         <StatsCard
           title="Active Subscribers"
           value={activeSubscribers}
           trend="up"
           trendValue="5%"
         />
-
         <StatsCard
           title="Total Revenue"
           value={`$${totalRevenue.toFixed(2)}`}
@@ -98,7 +100,6 @@ const SubscribersDashboard: React.FC = () => {
           <h2>Plan Distribution</h2>
           <PlanDistributionChart subscribers={subscribers} />
         </div>
-
         <div className={styles.chartContainer}>
           <h2>Subscribers Over Time</h2>
           <div className={styles.placeholderChart}>Chart placeholder</div>
@@ -113,29 +114,26 @@ const SubscribersDashboard: React.FC = () => {
             type="text"
             placeholder="Search by name or email"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
             className={styles.searchInput}
           />
-
           <Select
             options={planOptions}
             value={selectedPlan}
-            onChange={(value: string) => setSelectedPlan(value as SubscriptionPlan | 'All')}
+            onChange={handlePlanChange}
             className={styles.filterSelect}
           />
-
           <Select
             options={statusOptions}
             value={selectedStatus}
-            onChange={(value: string) => setSelectedStatus(value as 'All' | 'Active' | 'Expired')}
+            onChange={handleStatusChange}
             className={styles.filterSelect}
           />
         </div>
-
         <SubscriberList subscribers={filteredSubscribers} />
       </div>
     </div>
   );
 };
 
-export default SubscribersDashboard;
+export default React.memo(SubscribersDashboard);

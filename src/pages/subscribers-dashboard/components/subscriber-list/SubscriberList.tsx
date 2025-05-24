@@ -1,77 +1,50 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import styles from './SubscriberList.module.scss';
 import type { Subscriber } from '@/types/subscriber';
+import {
+  getCurrentPageFromUrl,
+  updatePageInUrl,
+  getPaginationRange,
+  validatePageNumber,
+} from '@/utils/pagination';
+import { formatDate } from '@/utils/date-utils';
+
 
 interface SubscriberListProps {
   subscribers: Subscriber[];
 }
 
 const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers }) => {
-  const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  useEffect(function initializePage() {
+    setCurrentPage(getCurrentPageFromUrl());
+  }, []);
 
+  const paginate = useCallback(function handlePageChange(pageNumber: number) {
+    const validatedPage = validatePageNumber(pageNumber, itemsPerPage, subscribers.length);
+    setCurrentPage(validatedPage);
+    updatePageInUrl(validatedPage);
+  }, [itemsPerPage, subscribers.length]);
+
+  // calculate pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = subscribers.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(subscribers.length / itemsPerPage);
 
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-
-  const getPageNumbers = useCallback(() => {
-    const pageNumbers = [];
-    const maxVisiblePages = 5;
-
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pageNumbers.push(i);
-      }
-    } else {
-      const leftBound = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-      const rightBound = Math.min(totalPages, leftBound + maxVisiblePages - 1);
-
-      if (leftBound > 1) {
-        pageNumbers.push(1);
-        if (leftBound > 2) {
-          pageNumbers.push('...');
-        }
-      }
-
-      for (let i = leftBound; i <= rightBound; i++) {
-        pageNumbers.push(i);
-      }
-
-      if (rightBound < totalPages) {
-        if (rightBound < totalPages - 1) {
-          pageNumbers.push('...');
-        }
-        pageNumbers.push(totalPages);
-      }
-    }
-
-    return pageNumbers;
-  }, []);
+  const pageNumbers = getPaginationRange(currentPage, totalPages);
 
   return (
     <div className={styles.tableContainer}>
       <table className={styles.subscriberTable}>
         <thead>
           <tr>
-            <th>USER</th>
-            <th>EMAIL</th>
-            <th>PLAN</th>
-            <th>STATUS</th>
-            <th>EXPIRES ON</th>
-            <th>JOIN DATE</th>
-            <th>COUNTRY</th>
-            <th>REVENUE</th>
+            {['user', 'email', 'plan', 'status', 'expires on', 'join date', 'country', 'revenue'].map(
+              (item) => (
+                <th>{item.toUpperCase()}</th>
+              ))}
           </tr>
         </thead>
         <tbody>
@@ -100,18 +73,17 @@ const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers }) => {
         </tbody>
       </table>
 
-      /* Pagination */
       {subscribers.length > itemsPerPage && (
         <div className={styles.pagination}>
           <button
-            onClick={() => paginate(Math.max(1, currentPage - 1))}
+            onClick={() => paginate(currentPage - 1)}
             disabled={currentPage === 1}
             className={styles.paginationButton}
           >
             Previous
           </button>
 
-          {getPageNumbers().map((number, index) => (
+          {pageNumbers.map((number, index) => (
             <React.Fragment key={index}>
               {number === '...' ? (
                 <span className={styles.paginationEllipsis}>...</span>
@@ -125,9 +97,8 @@ const SubscriberList: React.FC<SubscriberListProps> = ({ subscribers }) => {
               )}
             </React.Fragment>
           ))}
-
           <button
-            onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+            onClick={() => paginate(currentPage + 1)}
             disabled={currentPage === totalPages}
             className={styles.paginationButton}
           >
