@@ -29,4 +29,4 @@ export interface Subscriber {
 }
 
 export type SortField = 'name' | 'email' | 'plan' | 'status' | 'expiresOn' | 'joinDate' | 'revenue';
-export type SortDirection = 'asc' | 'desc';
+export type SortDirection = 'asc' | 'desc' | 'none';

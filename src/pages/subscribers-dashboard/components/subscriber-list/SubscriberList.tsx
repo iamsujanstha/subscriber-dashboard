@@ -22,8 +22,8 @@ interface SubscriberListProps {
 const ITEMS_PER_PAGE = 10;
 
 const SortIndicator: React.FC<{ field: SortField; currentField?: SortField; direction?: SortDirection }> = ({ field, currentField, direction }) => {
-  if (field !== currentField) return null;
-  return <span>{direction === 'asc' ? '↑' : '↓'}</span>;
+  if (field === currentField) return <span>{direction === 'asc' ? '↑' : direction === 'desc' ? '↓' : '↑↓'}</span>
+  return '↑↓'
 };
 
 const SubscriberList: React.FC<SubscriberListProps> = ({
@@ -51,7 +51,7 @@ const SubscriberList: React.FC<SubscriberListProps> = ({
     (page: number) => {
       const validated = validatePageNumber(page, ITEMS_PER_PAGE, subscribers.length);
       handlePageNumber(validated);
-      updatePageInUrl(validated);
+      updatePageInUrl('page', validated);
     },
     [handlePageNumber, subscribers.length]
   );

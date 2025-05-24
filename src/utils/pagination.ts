@@ -5,15 +5,25 @@ export const getCurrentPageFromUrl = (defaultPage = 1): number => {
   return isNaN(page) || page < 1 ? defaultPage : page;
 };
 
-export const updatePageInUrl = (page: number): void => {
+export const updatePageInUrl = <T extends string | number | boolean>(
+  key: string,
+  value: T
+): void => {
   const url = new URL(window.location.href);
-  if (page > 1) {
-    url.searchParams.set('page', page.toString());
+
+  const shouldUpdate =
+    (typeof value === 'number' && value > 1) ||
+    (typeof value !== 'number' && !!value);
+
+  if (shouldUpdate) {
+    url.searchParams.set(key, value.toString());
   } else {
-    url.searchParams.delete('page');
+    url.searchParams.delete(key);
   }
+
   window.history.replaceState({}, '', url.toString());
 };
+
 
 export const getPaginationRange = (
   currentPage: number,

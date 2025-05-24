@@ -10,6 +10,7 @@ import { getCombinedSubscribers } from '@/services/subscribers.service';
 import Select from '@/components/ui/select/Select';
 import { resetUrlParams } from '@/utils/url';
 import { barChartIcon, listIcon, pieChartIcon, SubscriptionIcon, userPlusIcon, userSlashIcon } from '@/assets';
+import { updatePageInUrl } from '@/utils/pagination';
 
 
 const SubscribersDashboard: React.FC = () => {
@@ -20,7 +21,7 @@ const SubscribersDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [pageNumber, setPageNumber] = useState(1);
   const [sortField, setSortField] = useState<SortField>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('none');
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
@@ -43,18 +44,16 @@ const SubscribersDashboard: React.FC = () => {
   useEffect(function syncPageNoWithUrl() {
     const params = new URLSearchParams(window.location.search);
     const page = params.get('page');
+    const plan = params.get('plan');
+    const status = params.get('status');
+
     if (page) setPageNumber(Number(page));
+    if (plan) setSelectedPlan(plan as SubscriptionPlan | 'All');
+    if (status) setSelectedStatus(status as 'All' | 'Active' | 'Expired');
   }, []);
 
+
   const filteredAndSortedSubscribers = useMemo(() => {
-    //Early return if no filters applied
-    if (
-      debouncedSearchTerm === '' &&
-      selectedPlan === 'All' &&
-      selectedStatus === 'All'
-    ) {
-      return subscribers;
-    }
     const filtered = subscribers.filter(subscriber => {
       const matchesSearch = subscriber.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         subscriber.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
@@ -90,16 +89,16 @@ const SubscribersDashboard: React.FC = () => {
           comparison = 0;
       }
 
-      return sortDirection === 'asc' ? comparison : -comparison;
+      return sortDirection === 'asc' ? comparison : sortDirection === 'desc' ? -comparison : 0;
     });
   }, [subscribers, debouncedSearchTerm, selectedPlan, selectedStatus, sortField, sortDirection]);
 
   const handleSort = useCallback((field: SortField) => {
     if (field === sortField) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+      setSortDirection(prev => prev === 'asc' ? 'desc' : prev === 'desc' ? 'none' : 'asc');
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection('none');
     }
     setPageNumber(1);
   }, [sortField]);
@@ -112,23 +111,32 @@ const SubscribersDashboard: React.FC = () => {
     };
   }, [subscribers]);
 
-  const handlePlanChange = useCallback((value: string) => {
-    setSelectedPlan(value as SubscriptionPlan | 'All');
-    setPageNumber(1);
-    resetUrlParams();
-  }, []);
+  const handleFilterChange = useCallback(
+    <T extends string>(
+      setter: React.Dispatch<React.SetStateAction<T>>,
+      key: string,
+      value: T
+    ) => {
+      setter(value);
+      setPageNumber(1);
+      resetUrlParams('page');
+      updatePageInUrl(key, value);
+    },
+    []
+  );
+  const handlePlanChange = (value: string) => {
+    handleFilterChange<SubscriptionPlan | 'All'>(setSelectedPlan, 'plan', value as SubscriptionPlan | 'All');
+  };
 
-  const handleStatusChange = useCallback((value: string) => {
-    setSelectedStatus(value as 'All' | 'Active' | 'Expired');
-    setPageNumber(1);
-    resetUrlParams();
-  }, []);
+  const handleStatusChange = (value: string) => {
+    handleFilterChange<'All' | 'Active' | 'Expired'>(setSelectedStatus, 'status', value as 'All' | 'Active' | 'Expired');
+  };
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setPageNumber(1);
-    resetUrlParams();
-  }, []);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    handleFilterChange(setSearchTerm, 'query', value);
+  };
+
 
   if (isLoading) {
     return <div className={styles.loading}>Loading dashboard...</div>;
