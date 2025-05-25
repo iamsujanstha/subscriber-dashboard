@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import styles from './SubscriberList.module.scss';
-import type { SortDirection, SortField, Subscriber } from '@/types/subscriber';
 import {
   getCurrentPageFromUrl,
   updatePageInUrl,
@@ -9,6 +8,7 @@ import {
 } from '@/utils/pagination';
 import { formatDate } from '@/utils/date-utils';
 import { SubscriberListCols } from '@/pages/subscribers-dashboard/subscribers.schema';
+import type { SortDirection, SortField, Subscriber } from '@/pages/subscribers-dashboard/subscriber.types';
 
 interface SubscriberListProps {
   subscribers: Subscriber[];
@@ -17,6 +17,7 @@ interface SubscriberListProps {
   sortField?: SortField;
   sortDirection?: SortDirection;
   onSort?: (field: SortField) => void;
+  searchedKeyword: string;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -33,10 +34,8 @@ const SubscriberList: React.FC<SubscriberListProps> = ({
   sortField,
   sortDirection,
   onSort,
+  searchedKeyword
 }) => {
-  useEffect(() => {
-    handlePageNumber(getCurrentPageFromUrl());
-  }, [handlePageNumber]);
 
   const totalPages = useMemo(() => Math.ceil(subscribers.length / ITEMS_PER_PAGE), [subscribers.length]);
 
@@ -46,6 +45,10 @@ const SubscriberList: React.FC<SubscriberListProps> = ({
   }, [subscribers, currentPageNumber]);
 
   const pageNumbers = useMemo(() => getPaginationRange(currentPageNumber, totalPages), [currentPageNumber, totalPages]);
+
+  useEffect(() => {
+    handlePageNumber(getCurrentPageFromUrl());
+  }, [handlePageNumber])
 
   const paginate = useCallback(
     (page: number) => {
@@ -58,6 +61,18 @@ const SubscriberList: React.FC<SubscriberListProps> = ({
 
   const handleHeaderClick = (field: SortField) => {
     onSort?.(field);
+    updatePageInUrl('sort', field)
+  };
+
+  const highlightMatch = (text: string, keyword: string): React.ReactNode => {
+    if (!keyword) return text;
+
+    const regex = new RegExp(`(${keyword})`, 'gi');
+    const parts = text.split(regex);
+
+    return parts.map((part, i) =>
+      part.toLowerCase() === keyword.toLowerCase() ? <strong key={i}>{part}</strong> : part
+    );
   };
 
   return (
@@ -76,16 +91,16 @@ const SubscriberList: React.FC<SubscriberListProps> = ({
           {currentItems.length > 0 ? (
             currentItems.map((subscriber) => (
               <tr key={subscriber.id}>
-                <td>{subscriber.name}</td>
-                <td>{subscriber.email}</td>
+                <td>{highlightMatch(subscriber.name, searchedKeyword)}</td>
+                <td>{highlightMatch(subscriber.email, searchedKeyword)}</td>
                 <td>{subscriber.plan}</td>
                 <td>
                   <span className={`${styles.statusBadge} ${styles[subscriber.status.toLowerCase()]}`}>
                     {subscriber.status}
                   </span>
                 </td>
-                <td>{formatDate(subscriber.expiresOn)}</td>
                 <td>{formatDate(subscriber.joinDate)}</td>
+                <td>{formatDate(subscriber.expiresOn)}</td>
                 <td>{subscriber.country}</td>
               </tr>
             ))

@@ -4,13 +4,13 @@ import PlanDistributionChart from './components/plan-distribution/PlanDistributi
 import StatsCard from '@/pages/subscribers-dashboard/components/stats-card/StatsCard';
 import SubscriberList from '@/pages/subscribers-dashboard/components/subscriber-list/SubscriberList';
 import { planOptions, statusOptions } from '@/pages/subscribers-dashboard/subscribers.schema';
-import type { SortDirection, SortField, Subscriber, SubscriptionPlan } from '@/types/subscriber';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getCombinedSubscribers } from '@/services/subscribers.service';
 import Select from '@/components/ui/select/Select';
 import { resetUrlParams } from '@/utils/url';
 import { barChartIcon, listIcon, pieChartIcon, SubscriptionIcon, userPlusIcon, userSlashIcon } from '@/assets';
 import { updatePageInUrl } from '@/utils/pagination';
+import type { SortDirection, SortField, Subscriber, SubscriptionPlan } from '@/pages/subscribers-dashboard/subscriber.types';
 
 
 const SubscribersDashboard: React.FC = () => {
@@ -40,16 +40,20 @@ const SubscribersDashboard: React.FC = () => {
     loadData();
   }, []);
 
-  // For Persist pagination even when page refresh
-  useEffect(function syncPageNoWithUrl() {
+  // For Persist pagination and filter even when page refresh
+  useEffect(function syncPageFilterWithUrl() {
     const params = new URLSearchParams(window.location.search);
     const page = params.get('page');
     const plan = params.get('plan');
     const status = params.get('status');
+    const sort = params.get('sort');
+    const searchedWord = params.get('query')
 
     if (page) setPageNumber(Number(page));
     if (plan) setSelectedPlan(plan as SubscriptionPlan | 'All');
     if (status) setSelectedStatus(status as 'All' | 'Active' | 'Expired');
+    if (sort) setSortField(sort as SortField);
+    if (searchedWord) setSearchTerm(searchedWord)
   }, []);
 
 
@@ -83,7 +87,8 @@ const SubscribersDashboard: React.FC = () => {
           comparison = a.expiresOn.getTime() - b.expiresOn.getTime();
           break;
         case 'joinDate':
-          comparison = a.joinDate.getTime() - b.joinDate.getTime();
+          comparison =
+            new Date(a.joinDate).getTime() - new Date(b.joinDate).getTime();
           break;
         default:
           comparison = 0;
@@ -221,6 +226,7 @@ const SubscribersDashboard: React.FC = () => {
           sortField={sortField}
           sortDirection={sortDirection}
           onSort={handleSort}
+          searchedKeyword={debouncedSearchTerm}
         />
       </div>
     </div>

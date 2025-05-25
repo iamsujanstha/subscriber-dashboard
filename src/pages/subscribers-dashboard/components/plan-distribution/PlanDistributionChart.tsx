@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './PlanDistribution.module.scss';
-import type { Subscriber, SubscriptionPlan } from '@/types/subscriber';
+import type { Subscriber, SubscriptionPlan } from '@/pages/subscribers-dashboard/subscriber.types';
 
 
 interface PlanDistributionChartProps {

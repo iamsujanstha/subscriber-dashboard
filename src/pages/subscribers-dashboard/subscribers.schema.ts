@@ -19,7 +19,7 @@ export const SubscriberListCols = [
   { label: 'EMAIL', field: 'email' },
   { label: 'PLAN', field: 'plan' },
   { label: 'STATUS', field: 'status' },
-  { label: 'EXPIRES ON', field: 'expiresOn' },
   { label: 'JOIN DATE', field: 'joinDate' },
+  { label: 'EXPIRES ON', field: 'expiresOn' },
   { label: 'COUNTRY', field: 'country' }
 ]

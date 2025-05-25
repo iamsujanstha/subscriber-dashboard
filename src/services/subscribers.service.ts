@@ -1,6 +1,6 @@
-import type { Subscription, User, Subscriber, SubscriptionPlan } from '@/types/subscriber';
 import subscriptionsData from '@/mocks/subscriptions.json';
 import usersData from '@/mocks/users.json';
+import type { Subscriber, Subscription, SubscriptionPlan, User } from '@/pages/subscribers-dashboard/subscriber.types';
 
 export const getCombinedSubscribers = (): Subscriber[] => {
   const subscriptions: Subscription[] = subscriptionsData.map(sub => ({
@@ -10,9 +10,15 @@ export const getCombinedSubscribers = (): Subscriber[] => {
   const users: User[] = usersData;
 
   return subscriptions.map(sub => {
-    const user = users.find(u => u.id === parseInt(sub.user_id));
+    console.log({ sub })
+    const user = users.find(u => u.id === Number(sub.user_id));
     const expiresOn = new Date(sub.expires_on);
     const status = user?.active ? 'Active' : 'Expired';
+    const joinDate = (() => {
+      const ts = Number(user?.join_date);
+      return isNaN(ts) ? new Date() : new Date(ts * 1000);
+    })();
+
 
     return {
       id: sub.id.toString(),
@@ -21,7 +27,7 @@ export const getCombinedSubscribers = (): Subscriber[] => {
       plan: sub.package,
       status,
       expiresOn,
-      joinDate: user ? new Date(parseInt(user.join_date) * 1000) : new Date(),
+      joinDate,
       country: user?.country || 'Unknown'
     };
   });
